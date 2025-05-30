@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Monitor Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+        .warning {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+        .screen-info {
+            margin-top: 20px;
+            text-align: left;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Monitor Detection System</h1>
+    <div id="result" class="result"></div>
+    <div id="screenInfo" class="screen-info"></div>
+
+    <script>
+        function checkMultipleMonitors() {
+            try {
+                const resultDiv = document.getElementById('result');
+                const screenInfoDiv = document.getElementById('screenInfo');
+                let isMultipleMonitors = false;
+                let detectionMethod = '';
+
+                // Get screen information
+                const screen = window.screen;
+                const totalWidth = screen.width;
+                const totalHeight = screen.height;
+                const availWidth = screen.availWidth;
+                const availHeight = screen.availHeight;
+                const currentLeft = screen.availLeft;
+                const currentTop = screen.availTop;
+
+                // Store initial screen position if not already stored
+                if (!window.initialScreenPosition) {
+                    window.initialScreenPosition = {
+                        left: currentLeft,
+                        top: currentTop,
+                        width: totalWidth,
+                        height: totalHeight
+                    };
+                }
+
+                // Method 1: Check for unusually large screen dimensions
+                if (totalWidth > 3840 || totalHeight > 2160) {
+                    isMultipleMonitors = true;
+                    detectionMethod = 'Screen dimensions';
+                }
+
+                // Method 2: Check for screen position changes
+                if (currentLeft !== window.initialScreenPosition.left || 
+                    currentTop !== window.initialScreenPosition.top) {
+                    isMultipleMonitors = true;
+                    detectionMethod = 'Screen position change';
+                }
+
+                // Method 3: Check for screen size changes
+                if (totalWidth !== window.initialScreenPosition.width || 
+                    totalHeight !== window.initialScreenPosition.height) {
+                    isMultipleMonitors = true;
+                    detectionMethod = 'Screen size change';
+                }
+
+                // Method 4: Check for screen ratio anomalies
+                const screenRatio = totalWidth / totalHeight;
+                if (screenRatio > 2.5 || screenRatio < 0.4) { // Most monitors have ratios between 0.4 and 2.5
+                    isMultipleMonitors = true;
+                    detectionMethod = 'Screen ratio anomaly';
+                }
+
+                // Display the result
+                if (isMultipleMonitors) {
+                    resultDiv.className = 'result warning';
+                    resultDiv.textContent = `⚠️ Multiple monitors detected! (Detected by: ${detectionMethod}) This is not allowed during the exam.`;
+                } else {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✅ Single monitor detected. You can proceed with the exam.';
+                }
+
+                // Display detailed screen information
+                let screenInfoHTML = '<h3>Screen Information:</h3>';
+                screenInfoHTML += `
+                    <ul>
+                        <li>Total Width: ${totalWidth}px</li>
+                        <li>Total Height: ${totalHeight}px</li>
+                        <li>Available Width: ${availWidth}px</li>
+                        <li>Available Height: ${availHeight}px</li>
+                        <li>Screen Position: Left: ${currentLeft}, Top: ${currentTop}</li>
+                        <li>Screen Ratio: ${(totalWidth / totalHeight).toFixed(2)}</li>
+                        <li>Color Depth: ${screen.colorDepth}</li>
+                        <li>Pixel Depth: ${screen.pixelDepth}</li>
+                    </ul>
+                `;
+                screenInfoDiv.innerHTML = screenInfoHTML;
+
+            } catch (error) {
+                document.getElementById('result').className = 'result warning';
+                document.getElementById('result').textContent = '⚠️ Error detecting screens: ' + error.message;
+            }
+        }
+
+        // Run the check when the page loads
+        window.addEventListener('load', checkMultipleMonitors);
+
+        // Add a refresh button
+        const refreshButton = document.createElement('button');
+        refreshButton.textContent = 'Refresh Detection';
+        refreshButton.style.marginTop = '20px';
+        refreshButton.style.padding = '10px 20px';
+        refreshButton.style.fontSize = '16px';
+        refreshButton.style.cursor = 'pointer';
+        refreshButton.onclick = checkMultipleMonitors;
+        document.body.appendChild(refreshButton);
+
+        // Check for screen changes
+        window.addEventListener('resize', checkMultipleMonitors);
+        window.addEventListener('orientationchange', checkMultipleMonitors);
+
+        // Periodic check for screen changes
+        setInterval(checkMultipleMonitors, 2000);
+    </script>
+</body>
+</html> 
